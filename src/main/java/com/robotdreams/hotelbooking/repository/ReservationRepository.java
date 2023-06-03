@@ -12,8 +12,7 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @Query(value =
-           "SELECT * FROM reservation join reservation_guest on reservation.id = reservation_guest.reservation_id " +
-           "join guest on guest.id = reservation_guest.guest_id WHERE guest.id = :guestId;" , nativeQuery = true)
+           "SELECT * FROM reservation join reservation_guest on reservation.id = reservation_guest.reservation_id join guest on guest.id = reservation_guest.guest_id ;" , nativeQuery = true)
     List<Reservation> findReservationByGuest(@Param("guestId") String guestId);
 
     int deleteById(int id);

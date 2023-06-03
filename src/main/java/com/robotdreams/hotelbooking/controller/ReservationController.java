@@ -93,7 +93,17 @@ public class ReservationController {
 
     @GetMapping("api/reservations")
     public List<Reservation> getAllReservation() {
+
+        List<Reservation> reservations = reservationsService.getAll();
+
+        for (Reservation reservation : reservations) {
+            List<Guest> guest = reservation.getGuest();
+            System.out.println(guest.get(0).getEmail());
+        }
+
         return reservationsService.getAll();
+
+
     }
 
     @GetMapping("api/guest/{id}/reservatinos")

@@ -107,7 +107,7 @@ public class GuestController {
 
     }
 
-    @GetMapping("api/guests/")
+    @GetMapping("api/guests")
     public List<Guest> getAllGuests() {
         return guestService.findAll();
     }
