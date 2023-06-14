@@ -32,9 +32,12 @@ public class ReservationsService {
         String guestId = id.toString();
         return reservationRepository.findReservationByGuest(guestId);
     }
-
     @Transactional
     public int deleteById(int id) {
         return reservationRepository.deleteById(id);
+    }
+
+    public List<Reservation> getReservationByRoomId(int id) {
+        return reservationRepository.getReservationByRoomId(id);
     }
 }

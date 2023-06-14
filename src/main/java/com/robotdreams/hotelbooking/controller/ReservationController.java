@@ -31,79 +31,75 @@ public class ReservationController {
 
 
     @PostMapping("api/add/reservation")
-    public ResponseEntity<Object> createReservation(@RequestBody ReservationRequestDto payload) {
+    public ResponseEntity<Object> createReservation(@RequestBody List<ReservationRequestDto> payload) {
 
-        if (!roomService.validateDates(payload.getFromDate(), payload.getToDate())) {
-            Map<String, String> hashMap = new HashMap<>();
-            hashMap.put("status", "error");
-            hashMap.put("message", INVALID_DATES_MESSAGE);
-            return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
-        }
 
-        List<RoomDto> rooms = roomService.getAvailableRooms(payload.getFromDate(), payload.getToDate());
+        for(ReservationRequestDto reservationDTO: payload) {
 
-        boolean roomIsAvailable = false;
-        for( RoomDto room: rooms ) {
-            if((room.getId() == Integer.parseInt(payload.getRoomId()))) {
-                roomIsAvailable = true;
+            if (!roomService.validateDates(reservationDTO.getFromDate(), reservationDTO.getToDate())) {
+                Map<String, String> hashMap = new HashMap<>();
+                hashMap.put("status", "error");
+                hashMap.put("message", INVALID_DATES_MESSAGE);
+                return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
             }
+
+            List<RoomDto> rooms = roomService.getAvailableRooms(reservationDTO.getFromDate(), reservationDTO.getToDate());
+
+            boolean roomIsAvailable = false;
+            for (RoomDto room : rooms) {
+                if ((room.getId() == Integer.parseInt(reservationDTO.getRoomId()))) {
+                    roomIsAvailable = true;
+                }
+            }
+
+            if (!roomIsAvailable) {
+                Map<String, String> hashMap = new HashMap<>();
+                hashMap.put("status", "error");
+                hashMap.put("message", NON_AVAILABLE_ROOM);
+
+                return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
+            }
+
+            List<Guest> guests = new ArrayList<>();
+            Optional<Guest> guest = guestService.findGuestByEmail(reservationDTO.getEmail());
+
+            if (guest.isEmpty()) {
+                Guest createGuest = Guest.builder().
+                        email(reservationDTO.getEmail()).
+                        dob(reservationDTO.getDob()).
+                        firstName(reservationDTO.getFirstName()).
+                        lastName(reservationDTO.getLastName()).
+                        passport(reservationDTO.getPassport()).build();
+                guests.add(createGuest);
+            } else {
+                guests.add(guest.get());
+            }
+
+            try {
+                Reservation reservation = Reservation.builder().
+                        startDate(reservationDTO.getFromDate()).
+                        endDate(reservationDTO.getToDate()).
+                        roomId(Integer.valueOf(reservationDTO.getRoomId())).
+                        active(true).
+                        guest(guests).build();
+
+                reservationsService.save(reservation);
+
+            } catch (Exception e) {
+                Map<String, String> hashMap = new HashMap<>();
+                hashMap.put("status", "error");
+                hashMap.put("message", e.getMessage());
+                return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
+            }
+
         }
 
-        if(!roomIsAvailable) {
-            Map<String, String> hashMap = new HashMap<>();
-            hashMap.put("status", "error");
-            hashMap.put("message", NON_AVAILABLE_ROOM);
-
-            return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
-        }
-
-        List<Guest> guests = new ArrayList<>();
-        Optional<Guest> guest = guestService.findGuestByEmail(payload.getEmail());
-
-        if(guest.isEmpty()) {
-            Guest createGuest = Guest.builder().
-                    email(payload.getEmail()).
-                    dob(payload.getDob()).
-                    firstName(payload.getFirstName()).
-                    lastName(payload.getLastName()).
-                    passport(payload.getPassport()).build();
-            guests.add(createGuest);
-        } else {
-            guests.add(guest.get());
-        }
-
-        try {
-            Reservation reservation = Reservation.builder().
-                    startDate(payload.getFromDate()).
-                    endDate(payload.getToDate()).
-                    roomId(Integer.valueOf(payload.getRoomId())).
-                    active(true).
-                    guest(guests).build();
-
-            reservationsService.save(reservation);
-
-        } catch (Exception e) {
-            Map<String, String> hashMap = new HashMap<>();
-            hashMap.put("status", "error");
-            hashMap.put("message", e.getMessage());
-            return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
-        }
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("api/reservations")
     public List<Reservation> getAllReservation() {
-
-        List<Reservation> reservations = reservationsService.getAll();
-
-        for (Reservation reservation : reservations) {
-            List<Guest> guest = reservation.getGuest();
-            System.out.println(guest.get(0).getEmail());
-        }
-
         return reservationsService.getAll();
-
-
     }
 
     @GetMapping("api/guest/{id}/reservatinos")

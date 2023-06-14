@@ -112,4 +112,13 @@ public class GuestController {
         return guestService.findAll();
     }
 
+    @DeleteMapping("api/guest/{id}")
+    public ResponseEntity<Object> removeGuest(@PathVariable Long id) {
+        List<Reservation> reservations = reservationsService.findReservationByGuest(id);
+        for(Reservation reservation: reservations) {
+            reservationsService.deleteById(Math.toIntExact(reservation.getId()));
+        }
+        guestService.removeGuest(id);
+        return ResponseEntity.ok().build();
+    }
 }

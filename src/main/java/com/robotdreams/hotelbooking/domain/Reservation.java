@@ -28,7 +28,7 @@ public class Reservation {
     @Column(nullable = false, columnDefinition = "DATE")
     private String endDate;
 
-    @ManyToMany(cascade = { CascadeType.DETACH })
+    @ManyToMany(cascade = { CascadeType.PERSIST })
     private List<Guest> guest;
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")

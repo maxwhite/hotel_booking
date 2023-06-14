@@ -1,10 +1,13 @@
 package com.robotdreams.hotelbooking.controller;
 
+import com.robotdreams.hotelbooking.domain.Reservation;
 import com.robotdreams.hotelbooking.domain.Room;
 import com.robotdreams.hotelbooking.dto.RoomDto;
 import com.robotdreams.hotelbooking.repository.RoomRepository;
+import com.robotdreams.hotelbooking.service.ReservationsService;
 import com.robotdreams.hotelbooking.service.RoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +22,15 @@ public class RoomController {
 
     private final RoomRepository roomRepository;
     private final RoomService roomService;
+    private final ReservationsService reservationsService;
 
     @PostMapping("api/room/add")
-    public ResponseEntity<Object> addRoom(@RequestBody Room room) {
+    public ResponseEntity<Object> addRoom(@RequestBody List<Room> room) {
 
         try {
-            roomRepository.save(room);
+            for(Room roomToAdd: room ) {
+                roomRepository.save(roomToAdd);
+            }
         }catch (Exception exception) {
             Map<String, String> hashMap = new HashMap<>();
             hashMap.put("status", "error");
@@ -81,7 +87,11 @@ public class RoomController {
 
     @DeleteMapping("api/room/delete/{id}")
     public ResponseEntity<Object> deleteRoom(@PathVariable int id) {
+        List <Reservation> reservations = reservationsService.getReservationByRoomId(id);
         if(roomService.deleteRoomById(id) > 0) {
+            for (Reservation reservation: reservations) {
+                reservationsService.deleteById(Math.toIntExact(reservation.getId()));
+            }
             return ResponseEntity.ok().build();
         }else {
             return ResponseEntity.notFound().build();

@@ -42,4 +42,8 @@ public class GuestService {
     public List<Guest> findAll() {
         return guestRepository.findAll();
     }
+
+    public void removeGuest(Long id) {
+        guestRepository.deleteById(id);
+    }
 }
